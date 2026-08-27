@@ -1,0 +1,16 @@
+name: Startup Smoke
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/startup-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo
+        run: echo startup-ok
