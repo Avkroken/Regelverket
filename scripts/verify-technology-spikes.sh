@@ -21,10 +21,10 @@ printf '==> Go tests and host build\n'
 printf '==> Rust tests and host build\n'
 (
   cd "$ROOT/spikes/rust"
-  cargo test --locked
-  cargo build --locked --release
-  cargo run --locked --quiet -- "$OBSERVED" "$CONFIG_NOOP" > "$TMP/rust-noop.json"
-  cargo run --locked --quiet -- "$OBSERVED" "$CONFIG_UPDATE" > "$TMP/rust-update.json"
+  cargo test
+  cargo build --release
+  cargo run --quiet -- "$OBSERVED" "$CONFIG_NOOP" > "$TMP/rust-noop.json"
+  cargo run --quiet -- "$OBSERVED" "$CONFIG_UPDATE" > "$TMP/rust-update.json"
 )
 
 printf '==> Semantic parity\n'
@@ -56,7 +56,7 @@ printf '==> Reproducibility\n'
 )
 (
   cd "$ROOT/spikes/rust"
-  cargo run --locked --quiet -- "$OBSERVED" "$CONFIG_UPDATE" > "$TMP/rust-update-second.json"
+  cargo run --quiet -- "$OBSERVED" "$CONFIG_UPDATE" > "$TMP/rust-update-second.json"
 )
 cmp "$TMP/go-update.json" "$TMP/go-update-second.json"
 cmp "$TMP/rust-update.json" "$TMP/rust-update-second.json"
