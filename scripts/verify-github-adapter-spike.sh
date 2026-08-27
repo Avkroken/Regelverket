@@ -23,12 +23,8 @@ printf '==> Build Rust adapter\n'
 (
   cd "$ROOT/spikes/github-adapter/rust"
   export CARGO_TARGET_DIR="$TMP/cargo-target"
-  cargo generate-lockfile
-  printf '%s\n' '--- BEGIN ADAPTER CARGO.LOCK ---'
-  cat Cargo.lock
-  printf '%s\n' '--- END ADAPTER CARGO.LOCK ---'
-  cargo test
-  cargo build
+  cargo test --locked
+  cargo build --locked
   cp "$CARGO_TARGET_DIR/debug/github-adapter-rust-spike" "$TMP/github-adapter-rust"
 )
 
