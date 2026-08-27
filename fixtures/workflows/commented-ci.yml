@@ -1,0 +1,27 @@
+# Human-maintained workflow fixture. Preserve this comment and layout.
+name: "CI" # quoted intentionally
+
+on:
+  pull_request:
+    branches: [main] # flow style intentionally retained
+
+env:
+  RUNTIME: "20"     # adaptation target; preserve quoting and this comment
+  CACHE_KEY: 'node-v1'
+
+jobs:
+  test:
+    name: unit-tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pinned
+      - name: Setup runtime
+        uses: actions/setup-node@7c1e2a926c9c0f8098f1711e998b2874f5aa6c24 # v6.0.0
+        with:
+          node-version: "${{ env.RUNTIME }}"
+      - name: Run tests
+        run: |
+          npm ci
+          npm test
