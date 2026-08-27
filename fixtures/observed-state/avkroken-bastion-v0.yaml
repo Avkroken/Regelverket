@@ -1,0 +1,363 @@
+schema: regelverket.observed-state/v0
+fixture: true
+fixture_note: >-
+  Partial empirical fixture assembled from verified GitHub observations on
+  2026-08-27. Omitted fields are deliberately marked unknown/not-collected;
+  this is not yet output from an implemented detector.
+observed_at: "2026-08-27T17:39:00+02:00"
+
+repository:
+  logical_id: repo.current
+  github:
+    id: 1288661408
+    full_name: Avkroken/bastion
+    owner:
+      login: Avkroken
+      type: Organization
+    visibility: public
+    default_branch: main
+
+capabilities:
+  repository_rulesets:
+    state: known
+    value: available_and_configured
+    evidence: [ev.rulesets.list]
+  merge_queue:
+    state: known
+    value: available_and_configured
+    evidence: [ev.ruleset.main]
+  github_actions_required_checks:
+    state: known
+    value: configured
+    evidence: [ev.ruleset.main]
+
+ref_classes:
+  - id: refclass.default
+    name: default
+    binding:
+      kind: github_default_branch
+      value: main
+  - id: refclass.work
+    name: work
+    evidence_state: inferred
+  - id: refclass.documentation
+    name: documentation
+    evidence_state: inferred
+  - id: refclass.automation.security_reports
+    name: automation-security-reports
+    evidence_state: inferred
+  - id: refclass.platform.android
+    name: platform-android
+    evidence_state: inferred
+  - id: refclass.platform.apple
+    name: platform-apple
+    evidence_state: inferred
+  - id: refclass.platform.cli
+    name: platform-cli
+    evidence_state: inferred
+  - id: refclass.platform.linux
+    name: platform-linux
+    evidence_state: inferred
+  - id: refclass.platform.swift_core
+    name: platform-swift-core
+    evidence_state: inferred
+  - id: refclass.platform.windows
+    name: platform-windows
+    evidence_state: inferred
+
+rulesets:
+  - id: ruleset.main
+    github_id: 21637223
+    name: Protect main
+    target: branch
+    enforcement: active
+    source:
+      level: repository
+      repository: Avkroken/bastion
+    conditions:
+      include: ["~DEFAULT_BRANCH"]
+      exclude: []
+    rules:
+      - type: deletion
+      - type: non_fast_forward
+      - type: required_linear_history
+      - type: required_status_checks
+        parameters:
+          strict: false
+          do_not_enforce_on_create: true
+          checks:
+            - {context: xcodegen-and-build, integration_id: 15368}
+            - {context: swiftpm-macos, integration_id: 15368}
+            - {context: ios-screenshots, integration_id: 15368}
+            - {context: swiftpm-linux, integration_id: 15368}
+            - {context: linuxapp-build, integration_id: 15368}
+            - {context: linuxapp-msrv, integration_id: 15368}
+            - {context: build-deb, integration_id: 15368}
+            - {context: build-rpm, integration_id: 15368}
+            - {context: build-deb-linuxapp, integration_id: 15368}
+            - {context: build-rpm-linuxapp, integration_id: 15368}
+            - {context: android-build, integration_id: 15368}
+            - {context: windowsapp-core-tests, integration_id: 15368}
+            - {context: windowsapp-build, integration_id: 15368}
+            - {context: osv, integration_id: 15368}
+            - {context: scope-policy, integration_id: 15368}
+      - type: pull_request
+        parameters:
+          required_approving_review_count: 0
+          dismiss_stale_reviews_on_push: true
+          required_review_thread_resolution: true
+          require_extra_approval_for_unattributed_changes: true
+          allowed_merge_methods: [squash]
+      - type: merge_queue
+        parameters:
+          merge_method: SQUASH
+          max_entries_to_build: 1
+          min_entries_to_merge: 1
+          max_entries_to_merge: 1
+          min_entries_to_merge_wait_minutes: 0
+          grouping_strategy: ALLGREEN
+          check_response_timeout_minutes: 60
+      - type: code_scanning
+        parameters:
+          tools:
+            - tool: CodeQL
+              security_alerts_threshold: all
+              alerts_threshold: all
+    bypass_actors: []
+    current_user_can_bypass: never
+    evidence: [ev.ruleset.main]
+
+  - id: ruleset.lock
+    github_id: 21637235
+    name: Lock branches
+    target: branch
+    enforcement: active
+    evidence: [ev.rulesets.list]
+
+  - id: ruleset.docs
+    github_id: 21637221
+    name: Protect docs content
+    target: branch
+    enforcement: active
+    evidence: [ev.rulesets.list]
+
+  - id: ruleset.security_reports
+    github_id: 21637220
+    name: Protect security reports
+    target: branch
+    enforcement: active
+    evidence: [ev.rulesets.list]
+
+  - id: ruleset.work
+    github_id: 21637233
+    name: Protect work branches
+    target: branch
+    enforcement: active
+    evidence: [ev.rulesets.list]
+
+  - id: ruleset.platform.android
+    github_id: 21637224
+    name: Protect Bastion android scope
+    target: branch
+    enforcement: active
+    evidence: [ev.rulesets.list]
+  - id: ruleset.platform.apple
+    github_id: 21637226
+    name: Protect Bastion apple scope
+    target: branch
+    enforcement: active
+    evidence: [ev.rulesets.list]
+  - id: ruleset.platform.cli
+    github_id: 21637228
+    name: Protect Bastion cli scope
+    target: branch
+    enforcement: active
+    evidence: [ev.rulesets.list]
+  - id: ruleset.platform.linux
+    github_id: 21637229
+    name: Protect Bastion linux scope
+    target: branch
+    enforcement: active
+    evidence: [ev.rulesets.list]
+  - id: ruleset.platform.swift_core
+    github_id: 21637231
+    name: Protect Bastion swift-core scope
+    target: branch
+    enforcement: active
+    evidence: [ev.rulesets.list]
+  - id: ruleset.platform.windows
+    github_id: 21637232
+    name: Protect Bastion windows scope
+    target: branch
+    enforcement: active
+    evidence: [ev.rulesets.list]
+
+workflows:
+  - id: workflow.osv
+    path: .github/workflows/osv-scanner.yml
+    blob_sha: d4364fa6f935bf2a59f1790a122caab7b6441bee
+    semantic_family: policy.osv
+    provider_capabilities: [check.osv]
+  - id: workflow.scope_policy
+    path: .github/workflows/scope-policy.yml
+    blob_sha: 8f5aa0b5cde912dcf520aaaed17437afd2eed5f5
+    semantic_family: policy.scope
+    provider_capabilities: [check.scope-policy]
+  - id: workflow.slot_sync
+    path: .github/workflows/sync-pool.yml
+    blob_sha: 8ad66f20d26594a64b43a921b760b5811f2b44ad
+    semantic_family: sequential-slots.sync
+  - id: workflow.auto_fix_review
+    path: .github/workflows/auto-fix-review.yml
+    blob_sha: bcb0e763628ccb74d139bf47accf5dd459fb0fb5
+    semantic_family: policy.auto-fix-review
+  - id: workflow.security_alert_snapshot
+    path: .github/workflows/security-alert-snapshot.yml
+    blob_sha: b754d12163f648e1af99bb05fdee13e70f756578
+    semantic_family: security.alert-snapshot
+
+  - id: workflow.android_build
+    path: .github/workflows/android-build.yml
+    blob_sha: ece5a7c6ca81738b5955519288332de9721aba14
+    semantic_family: repo-specific.ci
+  - id: workflow.linuxapp_build
+    path: .github/workflows/linuxapp-build.yml
+    blob_sha: 498cc87477abb265adc486cf80af765493060f2f
+    semantic_family: repo-specific.ci
+  - id: workflow.swiftpm_linux
+    path: .github/workflows/swiftpm-linux.yml
+    blob_sha: 90a274efbf5174314e4eccb27c2c08c6f34b6167
+    semantic_family: repo-specific.ci
+
+check_providers:
+  - check:
+      context: osv
+      integration_id: 15368
+    cardinality: one_known_provider
+    providers:
+      - workflow: workflow.osv
+        job_key: osv
+        events: [pull_request, merge_group]
+        evidence_state: known
+
+  - check:
+      context: scope-policy
+      integration_id: 15368
+    cardinality: one_known_provider
+    providers:
+      - workflow: workflow.scope_policy
+        evidence_state: known
+
+  - check:
+      context: android-build
+      integration_id: 15368
+    cardinality: provider_binding_partial
+    providers:
+      - workflow: workflow.android_build
+        evidence_state: inferred
+
+  - check:
+      context: linuxapp-build
+      integration_id: 15368
+    cardinality: provider_binding_partial
+    providers:
+      - workflow: workflow.linuxapp_build
+        evidence_state: inferred
+
+  - check:
+      context: swiftpm-linux
+      integration_id: 15368
+    cardinality: provider_binding_partial
+    providers:
+      - workflow: workflow.swiftpm_linux
+        evidence_state: inferred
+
+  - check:
+      context: xcodegen-and-build
+      integration_id: 15368
+    cardinality: unknown
+    providers: []
+  - check:
+      context: swiftpm-macos
+      integration_id: 15368
+    cardinality: observed_runtime_provider_not_fully_bound
+    providers: []
+  - check:
+      context: ios-screenshots
+      integration_id: 15368
+    cardinality: observed_runtime_provider_not_fully_bound
+    providers: []
+  - check:
+      context: linuxapp-msrv
+      integration_id: 15368
+    cardinality: unknown
+    providers: []
+  - check:
+      context: build-deb
+      integration_id: 15368
+    cardinality: unknown
+    providers: []
+  - check:
+      context: build-rpm
+      integration_id: 15368
+    cardinality: unknown
+    providers: []
+  - check:
+      context: build-deb-linuxapp
+      integration_id: 15368
+    cardinality: unknown
+    providers: []
+  - check:
+      context: build-rpm-linuxapp
+      integration_id: 15368
+    cardinality: unknown
+    providers: []
+  - check:
+      context: windowsapp-core-tests
+      integration_id: 15368
+    cardinality: unknown
+    providers: []
+  - check:
+      context: windowsapp-build
+      integration_id: 15368
+    cardinality: unknown
+    providers: []
+
+actors:
+  - id: actor.github-actions
+    github:
+      integration_id: 15368
+    identity:
+      state: known
+      value: GitHub Actions
+
+uncertainties:
+  - id: uncertainty.provider-bindings
+    severity: blocks_template_reuse_decisions_for_unbound_checks
+    subject: required check provider bindings
+    reason: only a subset has been statically/runtime-bound in this fixture
+  - id: uncertainty.effective-policy-samples
+    severity: blocks_full_effective_verification
+    subject: effective rules per representative ref
+    reason: not collected into this fixture yet
+  - id: uncertainty.actor-identities
+    severity: blocks_bypass_identity_assumptions
+    subject: non-Actions integration actor IDs in slot/lock rulesets
+    reason: numeric integration IDs must not be guessed
+
+evidence:
+  ev.rulesets.list:
+    kind: github_api
+    locator: https://api.github.com/repos/Avkroken/bastion/rulesets
+    authority: authoritative
+    observed_at: "2026-08-27T17:39:00+02:00"
+  ev.ruleset.main:
+    kind: github_api
+    locator: https://api.github.com/repos/Avkroken/bastion/rulesets/21637223
+    authority: authoritative
+    observed_at: "2026-08-27T17:39:00+02:00"
+
+normalization:
+  schema_version: v0
+  normalizer_version: not-implemented
+  semantic_digest: not-computed
