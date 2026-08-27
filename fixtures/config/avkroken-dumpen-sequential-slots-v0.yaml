@@ -1,0 +1,16 @@
+schema: regelverket.config/v0
+repository:
+  target: Avkroken/dumpen
+mode: adapt
+template:
+  id: sequential-slots
+  version: 0.1.0
+constraints:
+  destructive_changes: deny
+intent:
+  refs:
+    work: [work/feature, work/fix, work/chore]
+    documentation: [docs/content]
+    security_reports: [automation/security-reports]
+  checks:
+    required_contexts: [test, osv, scope-policy]
