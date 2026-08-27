@@ -6,6 +6,7 @@ on:
       - 'spikes/**'
       - 'fixtures/config/**'
       - 'fixtures/observed-state/**'
+      - 'fixtures/workflows/**'
       - 'scripts/verify-technology-spikes.sh'
       - '.github/workflows/technology-spikes.yml'
   workflow_dispatch:
