@@ -76,8 +76,11 @@ Path(sys.argv[2]).write_text(source.replace(needle, replacement, 1))
 PY
 (
   cd "$ROOT/spikes/yaml-fidelity/go"
-  go mod verify
-  go run -mod=readonly . "$WORKFLOW_FIXTURE" > "$TMP/go-workflow.yml"
+  go mod tidy
+  printf '%s\n' '--- BEGIN YAML GO.MOD ---'
+  cat go.mod
+  printf '%s\n' '--- END YAML GO.MOD ---'
+  go run . "$WORKFLOW_FIXTURE" > "$TMP/go-workflow.yml"
 )
 (
   cd "$ROOT/spikes/yaml-fidelity/rust"
