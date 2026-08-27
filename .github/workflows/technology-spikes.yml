@@ -1,0 +1,57 @@
+name: Technology Spikes
+
+on:
+  pull_request:
+    paths:
+      - 'spikes/**'
+      - 'fixtures/config/**'
+      - 'fixtures/observed-state/**'
+      - '.github/workflows/technology-spikes.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Verify Go spike
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd spikes/go
+          go test ./...
+          go run . ../../fixtures/observed-state/avkroken-dumpen-v0.yaml ../../fixtures/config/avkroken-dumpen-sequential-slots-v0.yaml > /tmp/go-noop.json
+          go run . ../../fixtures/observed-state/avkroken-dumpen-v0.yaml ../../fixtures/config/avkroken-dumpen-sequential-slots-add-check-v0.yaml > /tmp/go-update.json
+
+      - name: Verify Rust spike
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd spikes/rust
+          cargo test
+          cargo run --quiet -- ../../fixtures/observed-state/avkroken-dumpen-v0.yaml ../../fixtures/config/avkroken-dumpen-sequential-slots-v0.yaml > /tmp/rust-noop.json
+          cargo run --quiet -- ../../fixtures/observed-state/avkroken-dumpen-v0.yaml ../../fixtures/config/avkroken-dumpen-sequential-slots-add-check-v0.yaml > /tmp/rust-update.json
+
+      - name: Compare semantic outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          for case in ('noop', 'update'):
+              with open(f'/tmp/go-{case}.json') as f:
+                  go = json.load(f)
+              with open(f'/tmp/rust-{case}.json') as f:
+                  rust = json.load(f)
+              assert go == rust, (case, go, rust)
+          assert json.load(open('/tmp/go-noop.json'))['plan']['no_changes'] is True
+          update = json.load(open('/tmp/go-update.json'))
+          assert update['plan']['no_changes'] is False
+          assert update['plan']['operations'][0]['add'] == ['dependency-review']
+          PY
