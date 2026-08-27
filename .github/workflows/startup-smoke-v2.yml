@@ -1,0 +1,17 @@
+name: Startup Smoke v2
+
+on:
+  push:
+    branches:
+      - work/actions-reindex
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Echo
+        run: echo startup-v2-ok
