@@ -21,6 +21,11 @@ printf '==> Go tests and host build\n'
 printf '==> Rust tests and host build\n'
 (
   cd "$ROOT/spikes/rust"
+  export CARGO_TARGET_DIR="$TMP/cargo-target"
+  cargo generate-lockfile
+  printf '%s\n' '--- BEGIN GENERATED CARGO.LOCK ---'
+  cat Cargo.lock
+  printf '%s\n' '--- END GENERATED CARGO.LOCK ---'
   cargo test
   cargo build --release
   cargo run --quiet -- "$OBSERVED" "$CONFIG_NOOP" > "$TMP/rust-noop.json"
@@ -56,6 +61,7 @@ printf '==> Reproducibility\n'
 )
 (
   cd "$ROOT/spikes/rust"
+  export CARGO_TARGET_DIR="$TMP/cargo-target"
   cargo run --quiet -- "$OBSERVED" "$CONFIG_UPDATE" > "$TMP/rust-update-second.json"
 )
 cmp "$TMP/go-update.json" "$TMP/go-update-second.json"
