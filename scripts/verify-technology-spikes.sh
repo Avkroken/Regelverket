@@ -76,23 +76,33 @@ Path(sys.argv[2]).write_text(source.replace(needle, replacement, 1))
 PY
 (
   cd "$ROOT/spikes/yaml-fidelity/go"
-  go mod tidy
-  printf '%s\n' '--- BEGIN YAML GO.SUM ---'
-  cat go.sum
-  printf '%s\n' '--- END YAML GO.SUM ---'
-  go run . "$WORKFLOW_FIXTURE" > "$TMP/go-workflow.yml"
+  go mod verify
+  go run -mod=readonly . "$WORKFLOW_FIXTURE" > "$TMP/go-workflow.yml"
 )
 (
   cd "$ROOT/spikes/yaml-fidelity/rust"
   export CARGO_TARGET_DIR="$TMP/yaml-cargo-target"
-  cargo generate-lockfile
-  printf '%s\n' '--- BEGIN YAML CARGO.LOCK ---'
-  cat Cargo.lock
-  printf '%s\n' '--- END YAML CARGO.LOCK ---'
-  cargo run --quiet -- "$WORKFLOW_FIXTURE" > "$TMP/rust-workflow.yml"
+  cargo run --locked --quiet -- "$WORKFLOW_FIXTURE" > "$TMP/rust-workflow.yml"
 )
-cmp "$TMP/expected-workflow.yml" "$TMP/go-workflow.yml"
-cmp "$TMP/expected-workflow.yml" "$TMP/rust-workflow.yml"
-cmp "$TMP/go-workflow.yml" "$TMP/rust-workflow.yml"
+
+status=0
+if ! cmp "$TMP/expected-workflow.yml" "$TMP/go-workflow.yml"; then
+  printf '%s\n' '--- Go YAML fidelity diff ---'
+  diff -u "$TMP/expected-workflow.yml" "$TMP/go-workflow.yml" || true
+  status=1
+fi
+if ! cmp "$TMP/expected-workflow.yml" "$TMP/rust-workflow.yml"; then
+  printf '%s\n' '--- Rust YAML fidelity diff ---'
+  diff -u "$TMP/expected-workflow.yml" "$TMP/rust-workflow.yml" || true
+  status=1
+fi
+if ! cmp "$TMP/go-workflow.yml" "$TMP/rust-workflow.yml"; then
+  printf '%s\n' '--- Go vs Rust YAML output diff ---'
+  diff -u "$TMP/go-workflow.yml" "$TMP/rust-workflow.yml" || true
+  status=1
+fi
+if [[ "$status" -ne 0 ]]; then
+  exit "$status"
+fi
 
 printf 'technology spike verification: PASS\n'
