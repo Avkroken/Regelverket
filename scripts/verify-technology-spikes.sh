@@ -8,6 +8,7 @@ trap 'rm -rf "$TMP"' EXIT
 OBSERVED="$ROOT/fixtures/observed-state/avkroken-dumpen-v0.yaml"
 CONFIG_NOOP="$ROOT/fixtures/config/avkroken-dumpen-sequential-slots-v0.yaml"
 CONFIG_UPDATE="$ROOT/fixtures/config/avkroken-dumpen-sequential-slots-add-check-v0.yaml"
+WORKFLOW_FIXTURE="$ROOT/fixtures/workflows/commented-ci.yml"
 
 printf '==> Go tests and host build\n'
 (
@@ -62,5 +63,36 @@ printf '==> Reproducibility\n'
 )
 cmp "$TMP/go-update.json" "$TMP/go-update-second.json"
 cmp "$TMP/rust-update.json" "$TMP/rust-update-second.json"
+
+printf '==> YAML adaptation fidelity\n'
+python3 - "$WORKFLOW_FIXTURE" "$TMP/expected-workflow.yml" <<'PY'
+from pathlib import Path
+import sys
+source = Path(sys.argv[1]).read_text()
+needle = '  RUNTIME: "20"     # adaptation target; preserve quoting and this comment\n'
+replacement = '  RUNTIME: "22"     # adaptation target; preserve quoting and this comment\n'
+assert source.count(needle) == 1
+Path(sys.argv[2]).write_text(source.replace(needle, replacement, 1))
+PY
+(
+  cd "$ROOT/spikes/yaml-fidelity/go"
+  go mod tidy
+  printf '%s\n' '--- BEGIN YAML GO.SUM ---'
+  cat go.sum
+  printf '%s\n' '--- END YAML GO.SUM ---'
+  go run . "$WORKFLOW_FIXTURE" > "$TMP/go-workflow.yml"
+)
+(
+  cd "$ROOT/spikes/yaml-fidelity/rust"
+  export CARGO_TARGET_DIR="$TMP/yaml-cargo-target"
+  cargo generate-lockfile
+  printf '%s\n' '--- BEGIN YAML CARGO.LOCK ---'
+  cat Cargo.lock
+  printf '%s\n' '--- END YAML CARGO.LOCK ---'
+  cargo run --quiet -- "$WORKFLOW_FIXTURE" > "$TMP/rust-workflow.yml"
+)
+cmp "$TMP/expected-workflow.yml" "$TMP/go-workflow.yml"
+cmp "$TMP/expected-workflow.yml" "$TMP/rust-workflow.yml"
+cmp "$TMP/go-workflow.yml" "$TMP/rust-workflow.yml"
 
 printf 'technology spike verification: PASS\n'
