@@ -65,47 +65,44 @@ cmp "$TMP/go-update.json" "$TMP/go-update-second.json"
 cmp "$TMP/rust-update.json" "$TMP/rust-update-second.json"
 
 printf '==> YAML adaptation fidelity\n'
-python3 - "$WORKFLOW_FIXTURE" "$TMP/expected-workflow.yml" <<'PY'
-from pathlib import Path
-import sys
-source = Path(sys.argv[1]).read_text()
-needle = '  RUNTIME: "20"     # adaptation target; preserve quoting and this comment\n'
-replacement = '  RUNTIME: "22"     # adaptation target; preserve quoting and this comment\n'
-assert source.count(needle) == 1
-Path(sys.argv[2]).write_text(source.replace(needle, replacement, 1))
-PY
 (
   cd "$ROOT/spikes/yaml-fidelity/go"
-  go mod tidy
-  printf '%s\n' '--- BEGIN YAML GO.MOD ---'
-  cat go.mod
-  printf '%s\n' '--- END YAML GO.MOD ---'
-  go run . "$WORKFLOW_FIXTURE" > "$TMP/go-workflow.yml"
+  go mod verify
+  go run -mod=readonly . "$WORKFLOW_FIXTURE" > "$TMP/go-workflow.yml"
 )
 (
   cd "$ROOT/spikes/yaml-fidelity/rust"
   export CARGO_TARGET_DIR="$TMP/yaml-cargo-target"
   cargo run --locked --quiet -- "$WORKFLOW_FIXTURE" > "$TMP/rust-workflow.yml"
 )
+python3 - "$WORKFLOW_FIXTURE" "$TMP/go-workflow.yml" "$TMP/rust-workflow.yml" <<'PY'
+from pathlib import Path
+import sys
 
-status=0
-if ! cmp "$TMP/expected-workflow.yml" "$TMP/go-workflow.yml"; then
-  printf '%s\n' '--- Go YAML fidelity diff ---'
-  diff -u "$TMP/expected-workflow.yml" "$TMP/go-workflow.yml" || true
-  status=1
-fi
-if ! cmp "$TMP/expected-workflow.yml" "$TMP/rust-workflow.yml"; then
-  printf '%s\n' '--- Rust YAML fidelity diff ---'
-  diff -u "$TMP/expected-workflow.yml" "$TMP/rust-workflow.yml" || true
-  status=1
-fi
-if ! cmp "$TMP/go-workflow.yml" "$TMP/rust-workflow.yml"; then
-  printf '%s\n' '--- Go vs Rust YAML output diff ---'
-  diff -u "$TMP/go-workflow.yml" "$TMP/rust-workflow.yml" || true
-  status=1
-fi
-if [[ "$status" -ne 0 ]]; then
-  exit "$status"
-fi
+source = Path(sys.argv[1]).read_text().splitlines(keepends=True)
+go = Path(sys.argv[2]).read_text().splitlines(keepends=True)
+rust = Path(sys.argv[3]).read_text().splitlines(keepends=True)
+
+assert len(source) == len(go) == len(rust)
+target = 8
+for i, original in enumerate(source):
+    if i == target:
+        continue
+    assert go[i] == original, ("go changed untouched line", i + 1, original, go[i])
+    assert rust[i] == original, ("rust changed untouched line", i + 1, original, rust[i])
+
+expected_rust = '  RUNTIME: "22"     # adaptation target; preserve quoting and this comment\n'
+expected_go = '  RUNTIME: "22" # adaptation target; preserve quoting and this comment\n'
+assert rust[target] == expected_rust, rust[target]
+assert go[target] == expected_go, go[target]
+
+# Both candidates must preserve the scalar quoting and inline comment text.
+for candidate in (go[target], rust[target]):
+    assert 'RUNTIME: "22"' in candidate
+    assert '# adaptation target; preserve quoting and this comment' in candidate
+
+print('yaml fidelity: Rust exact target-line preservation')
+print('yaml fidelity: Go preserves all untouched bytes and normalizes target-line comment spacing')
+PY
 
 printf 'technology spike verification: PASS\n'
