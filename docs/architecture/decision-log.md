@@ -67,11 +67,20 @@ Executable workflow entrypoints must be compatible with GitHub's workflow path r
 
 GitHub documentation, API semantics, rule behavior and real-world patterns are mapped before CLI/file-format implementation decisions become difficult to reverse.
 
+### D-015 — Rust is the production core implementation language
+
+The Go/Rust decision gate is closed in favor of Rust.
+
+Both candidates passed deterministic compiler/planner parity, the read-only GitHub adapter experiment and Linux/macOS/Windows packaging. Rust is selected because the most safety-critical discriminating prototype — minimal adaptation of a comment/layout-heavy user-owned workflow — preserved the edited YAML line exactly except for the intended scalar change, while the Go prototype normalized spacing on that line. Rust also fits the project's explicit uncertainty/state modelling more directly.
+
+The higher contributor learning curve and larger dependency graph are accepted costs and must be mitigated through narrow modules, conservative dependencies, fixture-heavy tests and explicit architecture boundaries.
+
+See `implementation-language-decision-v0.md` for evidence and revisit conditions.
+
 ## Working hypotheses — not yet architectural facts
 
 These require research or prototyping before being promoted to decisions:
 
-- exact programming language/runtime,
 - final config/DSL shape,
 - exact manifest format and storage path,
 - final CLI command names,
