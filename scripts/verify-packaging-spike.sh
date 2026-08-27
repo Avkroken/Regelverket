@@ -32,10 +32,12 @@ for impl in go rust; do
   test -s "$OUT/$impl/regelverket$exe"
   printf '%s\n' "$impl:$platform:regelverket$exe" > "$OUT/$impl/MANIFEST.txt"
   if [[ "$platform" == windows ]]; then
-    (cd "$OUT/$impl" && tar -a -cf "$OUT/regelverket-$impl-$platform.zip" "regelverket$exe" MANIFEST.txt)
+    archive="../regelverket-$impl-$platform.zip"
+    (cd "$OUT/$impl" && tar -a -cf "$archive" "regelverket$exe" MANIFEST.txt)
     test -s "$OUT/regelverket-$impl-$platform.zip"
   else
-    (cd "$OUT/$impl" && tar -czf "$OUT/regelverket-$impl-$platform.tar.gz" regelverket MANIFEST.txt)
+    archive="../regelverket-$impl-$platform.tar.gz"
+    (cd "$OUT/$impl" && tar -czf "$archive" regelverket MANIFEST.txt)
     test -s "$OUT/regelverket-$impl-$platform.tar.gz"
   fi
 done
