@@ -5,4 +5,4 @@ edition = "2021"
 publish = false
 
 [dependencies]
-yaml-rt = { version = "0.2.2", default-features = false }
+yaml-rt = { version = "=0.2.3", default-features = false }
