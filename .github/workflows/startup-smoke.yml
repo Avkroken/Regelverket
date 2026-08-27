@@ -1,9 +1,16 @@
 name: Startup Smoke
 
 on:
+  push:
+    branches:
+      - 'work/tech-spikes'
+    paths:
+      - '.github/workflows/startup-smoke.yml'
+      - 'docs/research/actions-startup-failure-investigation-2026-08-27.md'
   pull_request:
     paths:
       - '.github/workflows/startup-smoke.yml'
+      - 'docs/research/actions-startup-failure-investigation-2026-08-27.md'
 
 permissions:
   contents: read
