@@ -1,0 +1,8 @@
+[package]
+name = "yaml-fidelity-rust"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+yaml-rt = { version = "0.2.2", default-features = false }
