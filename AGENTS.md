@@ -14,6 +14,13 @@ Before the PR is created:
 
 CI and AI/human reviewers are independent verification, not substitutes for understanding the code, testing the implementation, or reviewing the diff before submission. After every subsequent commit, repeat the relevant validation and inspect the new diff before relying on downstream review.
 
+## Review signal
+
+- Do not report spelling, grammar, wording, punctuation, or prose-style issues in documentation, Markdown, README files, code comments, docstrings, or other human-readable prose.
+- Exception: report a prose issue only when it materially changes technical meaning, security, correctness, user-visible behavior, or the accuracy of an instruction that must be followed literally.
+- Do report typos in executable or semantically significant code when they can affect behavior, including identifiers, string constants, paths, configuration keys, API fields, commands, selectors, protocol values, and similar machine-consumed text.
+- Prioritize functional correctness, security, reliability, compatibility, tests, and maintainability over editorial polish.
+
 ## GitHub-arbetsflöde
 
 Arbete sker via pull requests till `main`. `main` är den skyddade integrationsgrenen; arbetsgrenar är tillfälliga och får använda repo- eller agentvalda namn som `claude/*`, `codex/*`, `feature/*`, `fix/*` eller motsvarande.
