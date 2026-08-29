@@ -60,6 +60,6 @@ För read-only reviews, investigations, frågor eller live-konfigurationsuppgift
 
 ## Repository-specifika instruktioner
 
-Arbete sker via pull requests till `main`. `main` är den skyddade integrationsgrenen; arbetsgrenar är tillfälliga och får använda repo- eller agentvalda namn som `feature/*`, `fix/*`, `chore/*` eller motsvarande. Repositoryt ska inte vara beroende av en synkroniserad branch-pool för normalt agentarbete.
+Arbete sker via pull requests till `main`. `main` är den skyddade integrationsgrenen; arbetsgrenar är tillfälliga och får använda repo- eller agentvalda namn som `feature/*`, `fix/*`, `chore/*` eller motsvarande. Repositoryt ska inte vara beroende av en synkroniserad branch-pool, PR-watchdog eller review-bot-routing för normalt agentarbete.
 
-`.github/workflows/pr-watchdog.yml` bevakar lokala branches utan öppen PR som har unika commits mot `main`. När en sådan branch först observeras sparas `firstSeenAt`; efter mer än 60 minuter kan workflowen öppna en ready PR och armera auto-merge. Required CI, relevanta reviewtrådar, merge queue och övrig live enforcement bestämmer fortfarande om och när merge faktiskt får ske. Watchdoggen ska inte återöppna exakt samma HEAD som redan behandlats i en stängd PR.
+Repositoryts CI ska verifiera projektets faktiska implementation och research-spikes. CI ska som huvudregel vara read-only mot PR-grenen; genererade filer som krävs av verifieringen ska committas av den som gör ändringen i stället för att CI muterar PR:n.
