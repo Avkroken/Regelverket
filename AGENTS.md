@@ -40,7 +40,7 @@ Efter varje ny commit eller push ska aktuell HEAD, required checks/CI, mergeabil
 
 När GitHub bedömer PR:n som direkt mergebar och alla tillämpliga live gates är uppfyllda — required checks är godkända, inga konflikter eller relevanta olösta reviewtrådar/blockers återstår och ingen relevant review-feedback är outhanterad — ska PR:n mergas omedelbart.
 
-Försök inte aktivera auto-merge på en PR som redan är direkt mergebar. Använd auto-merge när PR:n ännu inte kan mergas enbart därför att obligatoriska gates fortfarande väntar och repositoryt stöder auto-merge. Live ruleset, merge queue och GitHub-inställningar bestämmer tillåten merge-metod. Forcera eller kringgå inte repositoryskydd.
+För agentens manuella mergebeslut: aktivera inte auto-merge på en PR som redan är direkt mergebar. Använd auto-merge när PR:n ännu inte kan mergas enbart därför att obligatoriska gates fortfarande väntar och repositoryt stöder auto-merge. Befintlig repositoryautomation får armera auto-merge enligt sitt uttryckliga kontrakt, men får aldrig kringgå required checks, review resolution, merge queue eller live ruleset. Live ruleset, merge queue och GitHub-inställningar bestämmer tillåten merge-metod.
 
 ## Credentials och AI-infrastruktur
 
@@ -60,8 +60,6 @@ För read-only reviews, investigations, frågor eller live-konfigurationsuppgift
 
 ## Repository-specifika instruktioner
 
-Arbete sker via pull requests till `main`. `main` är den skyddade integrationsgrenen; arbetsgrenar är tillfälliga och får använda repo- eller agentvalda namn som `claude/*`, `codex/*`, `feature/*`, `fix/*` eller motsvarande.
+Arbete sker via pull requests till `main`. `main` är den skyddade integrationsgrenen; arbetsgrenar är tillfälliga och får använda repo- eller agentvalda namn som `feature/*`, `fix/*`, `chore/*` eller motsvarande. Repositoryt ska inte vara beroende av en synkroniserad branch-pool för normalt agentarbete.
 
-`.github/workflows/pr-watchdog.yml` bevakar alla lokala branches utom `main`, merge-köns `gh-readonly-queue/*`, state-branchen `automation/pr-watchdog-state` och uttryckliga permanenta undantag. När en branch med unika commits först observeras utan öppen PR sparas `firstSeenAt` beständigt. Perioden fortsätter även om HEAD ändras och nollställs först när en öppen PR finns eller branchen inte längre har unika commits mot `main`. Efter mer än 60 minuter skapas en ready PR till `main` och workflowen aktiverar auto-merge enligt sin konfigurerade/tillåtna metod; required CI, review och övriga live gates fortsätter att blockera faktisk merge tills de är uppfyllda. Watchdoggen ska inte återöppna exakt samma HEAD som redan behandlats i en stängd PR och ska inte själv avgöra om arbetet är önskvärt eller mergebart; det beslutet lämnas till CI, review och repositoryts merge-gates.
-
-Befintliga `work/feature`, `work/fix` och `work/chore` får fortsätta användas som återanvändbara slots där repot har sync-pool, men de är inte de enda tillåtna arbetsgrenarna. `.github/workflows/sync-pool.yml` får endast återställa eller synka uttryckligen konfigurerade poolslots och får aldrig resetta godtyckliga agent- eller arbetsgrenar.
+`.github/workflows/pr-watchdog.yml` bevakar lokala branches utan öppen PR som har unika commits mot `main`. När en sådan branch först observeras sparas `firstSeenAt`; efter mer än 60 minuter kan workflowen öppna en ready PR och armera auto-merge. Required CI, relevanta reviewtrådar, merge queue och övrig live enforcement bestämmer fortfarande om och när merge faktiskt får ske. Watchdoggen ska inte återöppna exakt samma HEAD som redan behandlats i en stängd PR.
