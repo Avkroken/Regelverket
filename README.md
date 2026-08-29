@@ -1,8 +1,8 @@
 # Regelverket
 
-Regelverket är ett planerat publikt verktyg för att analysera, planera, applicera och verifiera GitHub repository-governance.
+Regelverket är ett publikt verktyg under utveckling för att analysera, planera, applicera och verifiera GitHub repository-governance.
 
-Projektet utgår från erfarenheter i Avkrokens tidigare ruleset/workflow-installation, men den nya implementationen ska skrivas som ett generiskt system från grunden. Den gamla implementationen används som referens, regression fixture och källa till dokumenterade driftlärdomar — inte som arkitektur som måste bevaras.
+Projektet utgår från erfarenheter i Avkrokens tidigare ruleset/workflow-installation, men implementationen byggs som ett generiskt system från grunden. Den gamla implementationen används som referens, regression fixture och källa till dokumenterade driftlärdomar — inte som arkitektur som måste bevaras.
 
 ## Vision
 
@@ -21,7 +21,7 @@ Regelverket ska kunna:
 
 ## Arkitekturriktning
 
-Regelverket ska i första hand vara en compiler/planner för GitHub repository-governance, inte ett växande installationsscript.
+Regelverket är i första hand en compiler/planner för GitHub repository-governance, inte ett växande installationsscript.
 
 ```text
 User intent + template + repository state + GitHub capabilities
@@ -37,7 +37,9 @@ User intent + template + repository state + GitHub capabilities
 
 ## Status
 
-Projektet är i forsknings- och arkitekturfas. Implementation ska inte låsas innan GitHubs dokumenterade semantik, API-ytor, faktiska beteende och relevanta arbetsflödesmönster har kartlagts tillräckligt väl.
+Rust är vald för produktionskärnan och den första deterministiska compiler/planner-implementationen finns i `src/`. Go- och Rust-spikesen ligger kvar som reproducerbar beslutsevidens för YAML-fidelitet, GitHub-adapters och cross-platform packaging.
+
+Projektet är fortfarande tidigt. Nästa implementation ska byggas vertikalt ovanpå den deterministiska kärnan och bevara idempotens, konservativ anpassning och verifierbar semantik.
 
 Se:
 
