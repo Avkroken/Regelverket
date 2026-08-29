@@ -1,0 +1,10 @@
+{
+  "automation/security-reports": {
+    "headSha": "efce6827f1257fdd91b89c78c2af986f1f2d755f",
+    "firstSeenAt": "2026-08-29T13:27:55.249Z"
+  },
+  "work/actions-reindex": {
+    "headSha": "6d8b63e7a78d42f82de5bcd08c44f6e24b68009c",
+    "firstSeenAt": "2026-08-29T13:27:55.249Z"
+  }
+}
