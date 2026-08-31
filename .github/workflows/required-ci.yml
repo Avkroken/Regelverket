@@ -71,7 +71,7 @@ jobs:
               case "$file" in
                 .github/workflows/required-ci.yml)
                   all=true ;;
-                *.md|docs/*|README*|LICENSE*|AGENTS.md|CLAUDE.md|SKILLS.md)
+                *.md|README*|LICENSE*|AGENTS.md|CLAUDE.md|SKILLS.md)
                   ;;
                 Cargo.toml|Cargo.lock|src/*|spikes/*|fixtures/config/*|fixtures/observed-state/*|fixtures/workflows/*|scripts/verify-github-adapter-spike.sh|scripts/verify-packaging-spike.sh|scripts/verify-technology-spikes.sh|.github/workflows/compiler-core.yml|.github/workflows/github-adapter-spike.yml|.github/workflows/packaging-spike.yml|.github/workflows/technology-spikes.yml)
                   ;;
