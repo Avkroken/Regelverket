@@ -10,28 +10,30 @@ Leverera fungerande, verifierade och avgränsade ändringar. Läs relevant imple
 
 - Pusha aldrig direkt till `main`.
 - Använd en kortlivad arbetsgren och öppna en ready PR till `main`.
-- **Aktivera auto-merge omedelbart när PR:n skapats**, även medan CI eller review pågår.
+- Aktivera auto-merge först när live-rulesetet motsvarar mergekontraktet nedan. Under ruleset-migration lämnas PR:n öppen tills den nya policyn är aktiv och verifierad.
 - Använd inte direkt merge om det inte uttryckligen begärts.
 - Repositoryt ska inte vara beroende av en synkroniserad branchpool, PR-watchdog, review-router eller kopierad Codex-remediation för normalt agentarbete.
-- Live-rulesetet tillåter för närvarande endast squash merge.
-- Ingen merge queue är live-enforced.
+- Squash är enda tillåtna merge-metod.
+- Ingen merge queue används.
 
 ## Merge-gates
 
-För `main` gäller för närvarande:
+När det nya rulesetet är importerat ska senaste PR-HEAD minst ha:
 
-- required status context: `scope-policy`
-- olösta review-trådar blockerar merge
-- Copilot Code Review körs vid push till PR-grenen
-- squash är enda tillåtna merge-metod
+- `CI / required`
+- `scope-policy`
+- `scan-pr / osv-scan`
+- native `CodeRabbit` commit-status
+- Code Scanning merge protection för CodeQL
+- lösta review-trådar
 
-`scope-policy` är en liten regression-gate som verifierar att pensionerad repositoryautomation inte återinförs. Den ersätter inte projektets övriga compiler-, spike-, packaging- eller säkerhetsverifiering.
+`CI / required` är den stabila aggregate-gaten för compiler- och spike-verifiering. `.github/workflows/required-ci.yml` routar påverkan och kör Rust core, GitHub-adapter-spike, technology-spikes och cross-platform packaging endast när de är relevanta. Vid okänd påverkan körs hela matrisen.
+
+`scope-policy` är en separat regression-gate som verifierar att pensionerad repositoryautomation inte återinförs. `CodeRabbit` ska vara pending under review och success först när aktuell HEAD är färdiggranskad. Copilot Code Review är rådgivande, ska köras om efter push, men är inte en hard gate.
 
 Alla review-kommentarer och trådar ska läsas och utvärderas. Relevanta findings åtgärdas i samma PR. En tråd markeras resolved först när eventuell nödvändig fix är genomförd och verifierad.
 
-Efter varje ny commit ska CI och review-status kontrolleras igen. När required `scope-policy` är grön och alla relevanta review-trådar är resolved ska den redan armerade auto-merge-funktionen föra PR:n till `main`.
-
-Om auto-merge inte sker ska den konkreta live-blockeraren identifieras. Kringgå aldrig rulesets, required checks eller review-thread-resolution.
+Efter varje ny commit ska CI och review-status kontrolleras igen. Kringgå aldrig rulesets, required checks eller review-thread-resolution.
 
 ## Pre-PR quality gate
 
@@ -45,6 +47,8 @@ Prioritera funktionell och teknisk signal framför redaktionell puts. Rapportera
 
 Regelverket utvecklar ett deterministiskt compiler/planner-flöde och research-spikes. Repositoryts CI ska verifiera faktisk implementation och evidens, inte mutera PR-grenen. Genererade filer som krävs av verifieringen ska committas av den som gör ändringen.
 
+De tidigare path-filtrerade workflowsen `compiler-core.yml`, `github-adapter-spike.yml`, `packaging-spike.yml` och `technology-spikes.yml` är ersatta av `.github/workflows/required-ci.yml` och ska inte återinföras som parallella CI-vägar.
+
 Pensionerad automation som `.github/workflows/sync-pool.yml`, `.github/workflows/pr-watchdog.yml`, `.github/workflows/auto-fix-review.yml`, `.github/workflows/codex-issue-remediation.yml`, `.github/workflows/startup-smoke.yml` och `.github/workflows/security-alert-snapshot.yml` får inte återinföras utan ett nytt uttryckligt repositorybeslut.
 
 GitHub Actions ska använda minsta nödvändiga behörighet och pinnas till full commit-SHA när praktiskt möjligt.
@@ -55,4 +59,4 @@ Committa eller exponera aldrig secrets, tokens, privata nycklar eller andra cred
 
 ## Definition of done
 
-En PR-baserad uppgift är klar först när diffen är självgranskad, relevant validering är genomförd, all review-feedback är utvärderad, required `scope-policy` är grön, relevanta review-trådar är resolved och auto-merge har mergat PR:n eller är armerad medan en verifierad extern gate fortfarande väntar.
+En PR-baserad uppgift är klar först när diffen är självgranskad, relevant validering är genomförd, all review-feedback är utvärderad, senaste HEAD har passerat merge-gates ovan, relevanta review-trådar är resolved och live-rulesetet faktiskt har verkställt policyn före merge.
