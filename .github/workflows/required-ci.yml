@@ -47,18 +47,33 @@ jobs:
             [[ -n "$changed" ]] || all=true
             while IFS= read -r file; do
               [[ -n "$file" ]] || continue
+
               case "$file" in
                 Cargo.toml|Cargo.lock|src/*|.github/workflows/compiler-core.yml)
                   core=true ;;
+              esac
+
+              case "$file" in
                 spikes/github-adapter/*|scripts/verify-github-adapter-spike.sh|.github/workflows/github-adapter-spike.yml)
                   adapter=true ;;
+              esac
+
+              case "$file" in
                 spikes/go/*|spikes/rust/*|scripts/verify-packaging-spike.sh|.github/workflows/packaging-spike.yml)
-                  packaging=true; technology=true ;;
+                  packaging=true ;;
+              esac
+
+              case "$file" in
                 spikes/*|fixtures/config/*|fixtures/observed-state/*|fixtures/workflows/*|scripts/verify-technology-spikes.sh|.github/workflows/technology-spikes.yml)
                   technology=true ;;
+              esac
+
+              case "$file" in
                 .github/workflows/required-ci.yml)
                   all=true ;;
                 *.md|docs/*|README*|LICENSE*|AGENTS.md|CLAUDE.md|SKILLS.md)
+                  ;;
+                Cargo.toml|Cargo.lock|src/*|spikes/*|fixtures/config/*|fixtures/observed-state/*|fixtures/workflows/*|scripts/verify-github-adapter-spike.sh|scripts/verify-packaging-spike.sh|scripts/verify-technology-spikes.sh|.github/workflows/compiler-core.yml|.github/workflows/github-adapter-spike.yml|.github/workflows/packaging-spike.yml|.github/workflows/technology-spikes.yml)
                   ;;
                 *)
                   all=true ;;
@@ -73,10 +88,12 @@ jobs:
             packaging=true
           fi
 
-          echo "core=$core" >> "$GITHUB_OUTPUT"
-          echo "adapter=$adapter" >> "$GITHUB_OUTPUT"
-          echo "technology=$technology" >> "$GITHUB_OUTPUT"
-          echo "packaging=$packaging" >> "$GITHUB_OUTPUT"
+          {
+            echo "core=$core"
+            echo "adapter=$adapter"
+            echo "technology=$technology"
+            echo "packaging=$packaging"
+          } >> "$GITHUB_OUTPUT"
 
   core:
     needs: impact
