@@ -23,53 +23,17 @@ jobs:
     name: prepare-auto-merge
     if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 2
     permissions:
-      contents: write
       pull-requests: write
     steps:
-      - name: Update PR branch to latest base
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          REPOSITORY: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-
-          pr_json="$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER")"
-          base_sha="$(jq -r '.base.sha' <<<"$pr_json")"
-          head_sha="$(jq -r '.head.sha' <<<"$pr_json")"
-          behind_by="$(gh api "repos/$REPOSITORY/compare/$base_sha...$head_sha" --jq '.behind_by')"
-
-          if (( behind_by > 0 )); then
-            gh pr update-branch "$PR_NUMBER" --repo "$REPOSITORY"
-          else
-            echo "PR branch is already current with its base."
-          fi
-
-          for attempt in {1..20}; do
-            pr_json="$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER")"
-            base_sha="$(jq -r '.base.sha' <<<"$pr_json")"
-            head_sha="$(jq -r '.head.sha' <<<"$pr_json")"
-            behind_by="$(gh api "repos/$REPOSITORY/compare/$base_sha...$head_sha" --jq '.behind_by')"
-            if (( behind_by == 0 )); then
-              echo "PR branch is current with base at HEAD $head_sha."
-              exit 0
-            fi
-            echo "Waiting for branch update to settle (attempt $attempt/20, behind_by=$behind_by)..."
-            sleep 3
-          done
-
-          echo "::error::PR branch did not become current with base within 60 seconds."
-          exit 1
-
       - name: Arm native auto-merge
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPOSITORY: ${{ github.repository }}
+          EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
           armed="$(gh pr view "$PR_NUMBER" --repo "$REPOSITORY" --json autoMergeRequest --jq '.autoMergeRequest != null')"
@@ -77,8 +41,7 @@ jobs:
             echo "Native auto-merge is already armed."
             exit 0
           fi
-          head_sha="$(gh pr view "$PR_NUMBER" --repo "$REPOSITORY" --json headRefOid --jq '.headRefOid')"
-          gh pr merge "$PR_NUMBER" --repo "$REPOSITORY" --auto --squash --match-head-commit "$head_sha"
+          gh pr merge "$PR_NUMBER" --repo "$REPOSITORY" --auto --squash --match-head-commit "$EXPECTED_HEAD_SHA"
 
   maintain-armed-prs:
     name: maintain-armed-prs
