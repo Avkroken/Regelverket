@@ -10,7 +10,7 @@ Leverera fungerande, verifierade och avgränsade ändringar. Läs relevant imple
 
 - Pusha aldrig direkt till `main`.
 - Använd en kortlivad arbetsgren och öppna en ready PR till `main`.
-- Aktivera auto-merge först när live-rulesetet är verifierat, required checks för aktuell HEAD är gröna och relevanta review-trådar är resolved.
+- Den centrala required-workflowen uppdaterar interna PR-brancher mot aktuell `main` och armerar GitHubs native auto-merge med squash. Armering är inte ett bypass: GitHub får merga först när aktuell HEAD uppfyller alla aktiva rulesets, required checks, Code Scanning-krav och review-thread-resolution.
 - Använd inte direkt merge om det inte uttryckligen begärts.
 - Repositoryt ska inte vara beroende av en synkroniserad branchpool, PR-watchdog, review-router eller kopierad Codex-remediation för normalt agentarbete.
 - Squash är enda tillåtna merge-metod.
