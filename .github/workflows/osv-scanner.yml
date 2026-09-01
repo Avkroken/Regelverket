@@ -25,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     permissions:
+      contents: write
       pull-requests: write
     steps:
       - name: Arm native auto-merge
