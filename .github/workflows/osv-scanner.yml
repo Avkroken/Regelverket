@@ -36,15 +36,33 @@ jobs:
           REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
+
           pr_json="$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER")"
           base_sha="$(jq -r '.base.sha' <<<"$pr_json")"
           head_sha="$(jq -r '.head.sha' <<<"$pr_json")"
           behind_by="$(gh api "repos/$REPOSITORY/compare/$base_sha...$head_sha" --jq '.behind_by')"
+
           if (( behind_by > 0 )); then
             gh pr update-branch "$PR_NUMBER" --repo "$REPOSITORY"
           else
             echo "PR branch is already current with its base."
           fi
+
+          for attempt in {1..20}; do
+            pr_json="$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER")"
+            base_sha="$(jq -r '.base.sha' <<<"$pr_json")"
+            head_sha="$(jq -r '.head.sha' <<<"$pr_json")"
+            behind_by="$(gh api "repos/$REPOSITORY/compare/$base_sha...$head_sha" --jq '.behind_by')"
+            if (( behind_by == 0 )); then
+              echo "PR branch is current with base at HEAD $head_sha."
+              exit 0
+            fi
+            echo "Waiting for branch update to settle (attempt $attempt/20, behind_by=$behind_by)..."
+            sleep 3
+          done
+
+          echo "::error::PR branch did not become current with base within 60 seconds."
+          exit 1
 
       - name: Arm native auto-merge
         shell: bash
