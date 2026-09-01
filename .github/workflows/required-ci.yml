@@ -47,7 +47,7 @@ jobs:
           if [[ -z "$BASE_SHA" || "$BASE_SHA" =~ ^0+$ ]] || ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
             run_all=true
           else
-            changed="$(git diff --name-only --diff-filter=ACMRDTUXB "$BASE_SHA" "$HEAD_SHA")"
+            changed="$(git diff --no-renames --name-only --diff-filter=ACMRDTUXB "$BASE_SHA" "$HEAD_SHA")"
             [[ -n "$changed" ]] || run_all=true
 
             while IFS= read -r file; do
@@ -81,7 +81,7 @@ jobs:
                 .github/workflows/required-ci.yml)
                   run_all=true
                   ;;
-                *.md|README*|LICENSE*|AGENTS.md|CLAUDE.md|SKILLS.md|docs/*)
+                *.md|README*|LICENSE*|docs/*)
                   ;;
                 Cargo.toml|Cargo.lock|src/*|spikes/github-adapter/*|spikes/go/*|spikes/rust/*|spikes/yaml-fidelity/*|fixtures/config/*|fixtures/observed-state/*|fixtures/workflows/*|scripts/verify-github-adapter-spike.sh|scripts/verify-packaging-spike.sh|scripts/verify-technology-spikes.sh)
                   ;;
