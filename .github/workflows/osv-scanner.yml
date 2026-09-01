@@ -85,6 +85,9 @@ jobs:
     if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      group: maintain-armed-prs-${{ github.repository }}
+      cancel-in-progress: false
     permissions:
       contents: write
       pull-requests: write
@@ -97,21 +100,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          mapfile -t pr_numbers < <(
+          mapfile -t armed_prs < <(
             gh api --paginate "repos/$REPOSITORY/pulls?state=open&base=main&per_page=100" \
-              --jq '.[] | select(.draft == false and .head.repo.full_name == .base.repo.full_name) | .number'
+              --jq '.[] | select(.draft == false and .head.repo.full_name == .base.repo.full_name and .auto_merge != null) | [.number, .base.sha, .head.sha] | @tsv'
           )
 
-          for pr_number in "${pr_numbers[@]}"; do
-            pr_json="$(gh api "repos/$REPOSITORY/pulls/$pr_number")"
-            armed="$(jq -r '.auto_merge != null' <<<"$pr_json")"
-            if [[ "$armed" != "true" ]]; then
-              echo "PR #$pr_number is not armed; leaving it unchanged."
-              continue
-            fi
-
-            base_sha="$(jq -r '.base.sha' <<<"$pr_json")"
-            head_sha="$(jq -r '.head.sha' <<<"$pr_json")"
+          for armed_pr in "${armed_prs[@]}"; do
+            IFS=$'\t' read -r pr_number base_sha head_sha <<<"$armed_pr"
             behind_by="$(gh api "repos/$REPOSITORY/compare/$base_sha...$head_sha" --jq '.behind_by')"
 
             if (( behind_by > 0 )); then
@@ -146,7 +141,10 @@ jobs:
             if [[ "$armed" != "true" ]]; then
               head_sha="$(jq -r '.head.sha' <<<"$pr_json")"
               echo "Re-arming PR #$pr_number after branch update."
-              gh pr merge "$pr_number" --repo "$REPOSITORY" --auto --squash --match-head-commit "$head_sha"
+              if ! gh pr merge "$pr_number" --repo "$REPOSITORY" --auto --squash --match-head-commit "$head_sha"; then
+                echo "::warning::Could not re-arm PR #$pr_number; continuing with remaining armed PRs."
+                continue
+              fi
             else
               echo "PR #$pr_number is current and remains armed."
             fi
