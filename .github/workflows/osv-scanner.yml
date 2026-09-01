@@ -2,120 +2,23 @@ name: OSV-Scanner
 
 on:
   pull_request:
-    branches:
-      - main
-    types:
-      - opened
-      - synchronize
-      - reopened
-      - ready_for_review
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
-    branches:
-      - main
+    branches: [main]
   schedule:
     - cron: '10 5 * * 1'
   workflow_dispatch:
 
 permissions: {}
 
+concurrency:
+  group: osv-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  prepare-auto-merge:
-    name: prepare-auto-merge
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - name: Arm native auto-merge
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          REPOSITORY: ${{ github.repository }}
-          EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          set -euo pipefail
-          armed="$(gh pr view "$PR_NUMBER" --repo "$REPOSITORY" --json autoMergeRequest --jq '.autoMergeRequest != null')"
-          if [[ "$armed" == "true" ]]; then
-            echo "Native auto-merge is already armed."
-            exit 0
-          fi
-          gh pr merge "$PR_NUMBER" --repo "$REPOSITORY" --auto --squash --match-head-commit "$EXPECTED_HEAD_SHA"
-
-  maintain-armed-prs:
-    name: maintain-armed-prs
-    if: ${{ github.event_name == 'push' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    concurrency:
-      group: maintain-armed-prs-${{ github.repository }}
-      cancel-in-progress: false
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - name: Keep armed PRs current
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-
-          mapfile -t armed_prs < <(
-            gh api --paginate "repos/$REPOSITORY/pulls?state=open&base=main&per_page=100" \
-              --jq '.[] | select(.draft == false and .head.repo.full_name == .base.repo.full_name and .auto_merge != null) | [.number, .base.sha, .head.sha] | @tsv'
-          )
-
-          for armed_pr in "${armed_prs[@]}"; do
-            IFS=$'\t' read -r pr_number base_sha head_sha <<<"$armed_pr"
-            behind_by="$(gh api "repos/$REPOSITORY/compare/$base_sha...$head_sha" --jq '.behind_by')"
-
-            if (( behind_by > 0 )); then
-              echo "Updating armed PR #$pr_number (behind_by=$behind_by)."
-              if ! gh pr update-branch "$pr_number" --repo "$REPOSITORY"; then
-                echo "::warning::Could not update armed PR #$pr_number; it may require conflict resolution."
-                continue
-              fi
-            fi
-
-            current=false
-            for attempt in {1..20}; do
-              pr_json="$(gh api "repos/$REPOSITORY/pulls/$pr_number")"
-              base_sha="$(jq -r '.base.sha' <<<"$pr_json")"
-              head_sha="$(jq -r '.head.sha' <<<"$pr_json")"
-              behind_by="$(gh api "repos/$REPOSITORY/compare/$base_sha...$head_sha" --jq '.behind_by')"
-              if (( behind_by == 0 )); then
-                current=true
-                break
-              fi
-              echo "Waiting for PR #$pr_number update (attempt $attempt/20, behind_by=$behind_by)..."
-              sleep 3
-            done
-
-            if [[ "$current" != "true" ]]; then
-              echo "::warning::Armed PR #$pr_number did not become current within 60 seconds."
-              continue
-            fi
-
-            pr_json="$(gh api "repos/$REPOSITORY/pulls/$pr_number")"
-            armed="$(jq -r '.auto_merge != null' <<<"$pr_json")"
-            if [[ "$armed" != "true" ]]; then
-              head_sha="$(jq -r '.head.sha' <<<"$pr_json")"
-              echo "Re-arming PR #$pr_number after branch update."
-              if ! gh pr merge "$pr_number" --repo "$REPOSITORY" --auto --squash --match-head-commit "$head_sha"; then
-                echo "::warning::Could not re-arm PR #$pr_number; continuing with remaining armed PRs."
-                continue
-              fi
-            else
-              echo "PR #$pr_number is current and remains armed."
-            fi
-          done
-
   scan-pr:
-    if: github.event_name == 'pull_request'
+    if: ${{ github.event_name == 'pull_request' }}
     uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@6e4298ebc4db23e847df9b2e2de2939d6f066c67 # v2.5.1
     permissions:
       actions: read
@@ -123,7 +26,7 @@ jobs:
       security-events: write
 
   scan-main:
-    if: github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: ${{ github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@6e4298ebc4db23e847df9b2e2de2939d6f066c67 # v2.5.1
     permissions:
       actions: read
@@ -131,20 +34,3 @@ jobs:
       security-events: write
     with:
       fail-on-vuln: false
-
-  osv:
-    name: osv
-    if: ${{ always() && github.event_name == 'pull_request' }}
-    needs: [scan-pr]
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    permissions:
-      contents: read
-    steps:
-      - name: Verify OSV gate
-        shell: bash
-        env:
-          PR_RESULT: ${{ needs.scan-pr.result }}
-        run: |
-          set -euo pipefail
-          [[ "$PR_RESULT" == "success" ]] || { echo "::error::OSV PR-skanning: $PR_RESULT"; exit 1; }

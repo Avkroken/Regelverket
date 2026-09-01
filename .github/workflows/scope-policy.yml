@@ -17,21 +17,22 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Verify retired automation stays removed
+      - name: Verify approved workflow inventory
         shell: bash
         run: |
           set -euo pipefail
-          retired=(
-            .github/workflows/sync-pool.yml
-            .github/workflows/pr-watchdog.yml
-            .github/workflows/auto-fix-review.yml
-            .github/workflows/codex-issue-remediation.yml
-            .github/workflows/startup-smoke.yml
-            .github/workflows/security-alert-snapshot.yml
-          )
-          for path in "${retired[@]}"; do
-            if [[ -e "$path" ]]; then
-              echo "::error::Retired automation must not be reintroduced: $path"
-              exit 1
-            fi
-          done
+
+          expected=$'osv-scanner.yml\nrequired-ci.yml\nscope-policy.yml'
+          actual="$(
+            find .github/workflows -maxdepth 1 -type f \( -name '*.yml' -o -name '*.yaml' \) -printf '%f\n' \
+              | LC_ALL=C sort
+          )"
+
+          if [[ "$actual" != "$expected" ]]; then
+            echo "::error::Workflow inventory differs from the approved Regelverket baseline."
+            echo "Expected:"
+            printf '%s\n' "$expected"
+            echo "Actual:"
+            printf '%s\n' "$actual"
+            exit 1
+          fi

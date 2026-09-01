@@ -1,91 +1,92 @@
 # AGENTS.md
 
-Den här filen är repositoryts auktoritativa arbetsinstruktion. Live GitHub-konfiguration är verkställande sanning när dokumentation och faktisk enforcement skiljer sig.
+Den här filen är repositoryts auktoritativa arbetsinstruktion. Live GitHub-konfiguration är verkställande sanning om dokumentation och faktisk enforcement skiljer sig.
 
 ## Arbetsprincip
 
-Leverera fungerande, verifierade och avgränsade ändringar. Läs relevant implementation, tester, konfiguration och dokumentation innan lösningen bestäms. Bevara befintlig arkitektur och inför inte breaking changes om de inte uttryckligen krävs.
+Leverera fungerande, verifierade och avgränsade ändringar. Läs relevant implementation, tester, konfiguration och dokumentation innan en lösning bestäms. Inför inte breaking changes utan uttryckligt beslut.
 
 ## Brancher och pull requests
 
 - Pusha aldrig direkt till `main`.
-- Använd en kortlivad arbetsgren och öppna en ready PR till `main`.
-- Den centrala required-workflowen uppdaterar interna PR-brancher mot aktuell `main` och armerar GitHubs native auto-merge med squash. Armering är inte ett bypass: GitHub får merga först när aktuell HEAD uppfyller alla aktiva rulesets, required checks, Code Scanning-krav och review-thread-resolution.
-- Använd inte direkt merge om det inte uttryckligen begärts.
-- Repositoryt ska inte vara beroende av en synkroniserad branchpool, PR-watchdog, review-router eller kopierad Codex-remediation för normalt agentarbete.
+- Använd `dev` som arbetsbranch och öppna PR från `dev` till `main`.
+- Skapa inte ytterligare arbetsbrancher för normalt agentarbete.
 - Squash är enda tillåtna merge-metod.
-- Ingen merge queue används.
+- Använd inte direkt merge om det inte uttryckligen begärts.
+- Repositoryts workflows får inte uppdatera PR-brancher, armera auto-merge eller utföra annan PR-maintenance. Sådan automation är ett separat ansvar utanför Regelverkets verifieringsworkflows.
 
 ## Live merge-policy för `main`
 
-Det aktiva repository-rulesetet gäller default branch och har inga bypass actors. Det blockerar deletion och non-fast-forward/force push och kräver pull request före merge.
+`main` skyddas av aktiva organization-rulesets från `Avkroken` utan bypass actors.
 
-Pull request-policyn är:
+Pull request-policyn kräver:
 
-- 0 generella approvals
-- ingen last-push approval
-- olösta review-trådar blockerar merge
-- endast squash merge
+- 1 approval
+- stale approvals avvisas efter ny push
+- approval från någon annan än den som gjorde senaste pushen
+- resolved review-trådar
+- squash merge
 
 Required status checks är exakt:
 
 - `CI / required`
 - `scope-policy`
-- `osv`
+- `scan-pr / osv-scan`
 
-Required status checks använder strict latest-base enforcement. En PR måste därför verifieras mot aktuell `main`; gamla resultat från en äldre base eller HEAD får inte användas som mergebevis.
+Required status checks använder strict latest-base enforcement. Resultat från en äldre base eller HEAD är inte mergebevis.
 
-`CI / required` är den stabila aggregate-gaten för compiler- och spike-verifiering. `.github/workflows/required-ci.yml` routar påverkan och kör Rust core, GitHub-adapter-spike, technology-spikes och cross-platform packaging när de är relevanta. Vid okänd påverkan körs hela matrisen. Aggregate-jobbet ska alltid skapas och faila om en obligatorisk underliggande verifiering inte slutar i `success`.
+## Workflow-arkitektur
 
-`scope-policy` är en separat regression-gate som verifierar att pensionerad repositoryautomation inte återinförs.
+Varje workflow har ett enda ansvar. Den godkända workflow-inventeringen är:
 
-`osv` är den stabila dependency/security-gaten för PR. Den failar om OSV:s PR-skanning inte slutar i `success`.
+- `.github/workflows/required-ci.yml` — build-, test- och verifierings-CI för repositoryts implementation och spikes. Den får endast läsa källkod och producera verifieringsresultat.
+- `.github/workflows/scope-policy.yml` — regression-gate för den godkända workflow-inventeringen. Den får endast verifiera policy.
+- `.github/workflows/osv-scanner.yml` — OSV dependency scanning. Den får endast skanna och rapportera dependency/security-resultat.
 
-## Code Scanning
+Ett workflow får inte få ett andra operativt ansvar för att det råkar vara praktiskt att lägga koden där. PR-maintenance, auto-merge, branchmutation, remediation och deployment ska inte gömmas i CI- eller security-workflows.
 
-Code Scanning merge protection är aktiv för verktyget `CodeQL`.
+De pensionerade workflowsen `compiler-core.yml`, `github-adapter-spike.yml`, `packaging-spike.yml`, `technology-spikes.yml`, `sync-pool.yml`, `pr-watchdog.yml`, `auto-fix-review.yml`, `codex-issue-remediation.yml`, `startup-smoke.yml` och `security-alert-snapshot.yml` ska inte återinföras som parallella vägar.
+
+GitHub Actions ska använda minsta nödvändiga behörighet och actions ska pinnas till full commit-SHA när praktiskt möjligt.
+
+## Required CI
+
+`CI / required` är den stabila aggregate-gaten. `required-ci.yml` klassificerar ändrade paths och kör endast relevanta verifieringar:
+
+- Rust core: `cargo fmt`, `cargo clippy`, `cargo test`
+- GitHub adapter spike: `scripts/verify-github-adapter-spike.sh`
+- technology spikes: `scripts/verify-technology-spikes.sh`
+- cross-platform packaging: `scripts/verify-packaging-spike.sh` på Linux, macOS och Windows
+
+Okänd påverkan ska fail-safe till hela CI-matrisen. Aggregate-jobbet ska alltid skapas och faila om en vald obligatorisk verifiering inte slutar i `success`.
+
+## Scope policy
+
+`scope-policy` verifierar att `.github/workflows/` exakt motsvarar den godkända workflow-inventeringen ovan. Ett nytt workflow kräver därför ett uttryckligt arkitekturbeslut och en samtidig uppdatering av policyn.
+
+## OSV
+
+`osv-scanner.yml` är repositoryts källa för organisationens centrala OSV required workflow. På PR är merge-gaten `scan-pr / osv-scan`. På `main`, schemalagd körning och manuell körning skannas dependencies för rapportering utan att workflowen får PR- eller branchbehörigheter.
+
+## Code Scanning och review
+
+Code Scanning merge protection gäller `CodeQL`:
 
 - security alerts från `medium` och uppåt blockerar merge
-- CodeQL error/warning-alerts blockerar merge
+- CodeQL errors och warnings blockerar merge
 
-Trivy är inte konfigurerat i repositoryt och det finns därför ingen Trivy merge-gate eller Trivy-threshold att dokumentera som aktiv policy.
+Copilot Code Review är aktiverat via organization-ruleset och är rådgivande, men relevanta review-trådar måste hanteras eftersom resolved conversations krävs före merge.
 
-## CodeRabbit och Copilot
-
-CodeRabbit är best effort och är **inte** en required status check. `.coderabbit.yaml` får publicera sanningsenlig commit-status, reviewfel och incremental review-signal, men saknad, pending, rate-limited eller misslyckad CodeRabbit-status blockerar inte ensam merge.
-
-Om CodeRabbit faktiskt lämnar relevanta findings ska de verifieras och åtgärdas. Relevanta review-trådar måste vara resolved före merge eftersom GitHub-rulesetet kräver review-thread-resolution.
-
-Copilot Code Review är rådgivande och är inte en hard merge-gate. Rulesetet har `review_on_push` aktiverat och draft-PR:er undantas. Om Copilot faktiskt lämnar relevanta findings ska de utvärderas och eventuella relevanta review-trådar hanteras som annan review-feedback.
-
-## Review-feedback
-
-Alla review-kommentarer och trådar ska läsas och utvärderas. Relevanta findings åtgärdas i samma PR. En tråd markeras resolved först när eventuell nödvändig fix är genomförd och verifierad.
-
-Efter varje ny commit ska CI, Code Scanning och review-status kontrolleras igen för exakt aktuell HEAD. Kringgå aldrig rulesets, required checks, Code Scanning merge protection eller review-thread-resolution.
+CodeRabbit är best effort och inte en required status check. Faktiska relevanta findings ska ändå verifieras och åtgärdas.
 
 ## Pre-PR quality gate
 
-Innan en ready PR skapas eller uppdateras ska hela diffen mot base branch granskas. Kontrollera korrekthet, säkerhet, felhantering, kompatibilitet, relevanta edge cases, secrets/debugrester/oavsiktliga filer och kör relevanta tester/lint/typecheck/build. Efter senare commits ska påverkad validering köras igen.
+Före en ready PR ska hela diffen mot `main` granskas. Kontrollera korrekthet, säkerhet, felhantering, kompatibilitet, relevanta edge cases, secrets/debugrester/oavsiktliga filer och kör relevant test/lint/typecheck/build. Efter varje ny commit ska påverkad verifiering och live merge-status kontrolleras igen för exakt aktuell HEAD.
 
-## Review-signal
+## Credentials
 
-Prioritera funktionell och teknisk signal framför redaktionell puts. Rapportera inte rena stavnings-, grammatik-, interpunktions-, wording- eller stilfel i dokumentation, Markdown, README, kodkommentarer eller docstrings. Rapportera däremot textfel som materiellt kan ändra teknisk betydelse, säkerhet, korrekthet, användarbeteende eller bokstavliga instruktioner samt typos i maskin- eller semantikbärande innehåll.
-
-## Repository-specifikt
-
-Regelverket utvecklar ett deterministiskt compiler/planner-flöde och research-spikes. Repositoryts CI ska verifiera faktisk implementation och evidens, inte mutera PR-grenen. Genererade filer som krävs av verifieringen ska committas av den som gör ändringen.
-
-De tidigare path-filtrerade workflowsen `compiler-core.yml`, `github-adapter-spike.yml`, `packaging-spike.yml` och `technology-spikes.yml` är ersatta av `.github/workflows/required-ci.yml` och ska inte återinföras som parallella CI-vägar.
-
-Pensionerad automation som `.github/workflows/sync-pool.yml`, `.github/workflows/pr-watchdog.yml`, `.github/workflows/auto-fix-review.yml`, `.github/workflows/codex-issue-remediation.yml`, `.github/workflows/startup-smoke.yml` och `.github/workflows/security-alert-snapshot.yml` får inte återinföras utan ett nytt uttryckligt repositorybeslut.
-
-GitHub Actions ska använda minsta nödvändiga behörighet och pinnas till full commit-SHA när praktiskt möjligt.
-
-## Credentials och verifiering
-
-Committa eller exponera aldrig secrets, tokens, privata nycklar eller andra credentials. Ett lyckat API- eller workflow-anrop är inte i sig bevis på att en live-ändring är aktiv; verifiera resulterande state när uppgiften ändrar GitHub-konfiguration eller annan runtime/infrastruktur.
+Committa eller exponera aldrig secrets, tokens, privata nycklar eller andra credentials. Ett lyckat API- eller workflow-anrop är inte i sig bevis på att en live-ändring är aktiv; verifiera resulterande state.
 
 ## Definition of done
 
-En PR-baserad uppgift är klar först när diffen är självgranskad, relevant validering är genomförd, all review-feedback är utvärderad, exakt aktuell HEAD har passerat `CI / required`, `scope-policy`, `osv` och CodeQL merge protection, relevanta review-trådar är resolved, live-rulesetet fortfarande motsvarar policyn ovan och PR:n har mergats enligt normal repositorypolicy.
+En PR-baserad uppgift är klar först när diffen är självgranskad, relevant validering är genomförd, aktuell HEAD har passerat `CI / required`, `scope-policy`, `scan-pr / osv-scan` och CodeQL merge protection, nödvändiga approvals finns, relevanta review-trådar är resolved och ändringen har mergats enligt normal repositorypolicy.
