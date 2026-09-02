@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
   pull-requests: write
 
 concurrency:
@@ -43,9 +44,32 @@ jobs:
             fi
 
             merge_state="$(gh pr view "$pr" --repo "$GH_REPO" --json mergeStateStatus --jq '.mergeStateStatus')"
-            if [[ "$merge_state" == "BEHIND" ]]; then
-              if ! gh pr update-branch "$pr" --repo "$GH_REPO"; then
-                echo "::warning title=Dependabot branch update::Could not update PR #${pr}; a later reconciliation will retry."
+            if [[ "$merge_state" != "BEHIND" ]]; then
+              continue
+            fi
+
+            base_sha="$(gh pr view "$pr" --repo "$GH_REPO" --json baseRefOid --jq '.baseRefOid')"
+            marker="dependabot-automerge-rebase:${base_sha}"
+            latest_request="$(
+              gh api --paginate "repos/${GH_REPO}/issues/${pr}/comments?per_page=100" \
+                --jq ".[] | select(.user.login == \"github-actions[bot]\") | select(.body | contains(\"${marker}\")) | .created_at" \
+                | tail -n 1
+            )"
+
+            request_rebase=true
+            if [[ -n "$latest_request" ]]; then
+              if last_epoch="$(date -d "$latest_request" +%s 2>/dev/null)"; then
+                now_epoch="$(date -u +%s)"
+                if (( now_epoch - last_epoch < 3600 )); then
+                  request_rebase=false
+                fi
+              fi
+            fi
+
+            if [[ "$request_rebase" == "true" ]]; then
+              body="$(printf '@dependabot rebase\n\n<!-- %s -->' "$marker")"
+              if ! gh pr comment "$pr" --repo "$GH_REPO" --body "$body"; then
+                echo "::warning title=Dependabot rebase::Could not request a Dependabot rebase for PR #${pr}; a later reconciliation will retry."
               fi
             fi
           done
