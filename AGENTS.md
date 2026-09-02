@@ -9,8 +9,8 @@ Leverera fungerande, verifierade och avgränsade ändringar. Läs relevant imple
 ## Brancher och pull requests
 
 - Pusha aldrig direkt till `main`.
-- Använd `dev` som arbetsbranch och öppna PR från `dev` till `main`.
-- Skapa inte ytterligare arbetsbrancher för normalt agentarbete.
+- Skapa en kortlivad arbetsbranch från aktuell `main` för varje logisk ändring och öppna en ready PR till `main`.
+- `dev` är inte en permanent arbetsbranch och ska inte användas som standard för nytt arbete.
 - Squash är enda tillåtna merge-metod.
 - Använd inte direkt merge om det inte uttryckligen begärts.
 - Repositoryts workflows får inte uppdatera PR-brancher, armera auto-merge eller utföra annan PR-maintenance. Sådan automation är ett separat ansvar utanför Regelverkets verifieringsworkflows. Metadata-only assignee/label-hantering enligt undantaget nedan är den enda tillåtna avvikelsen och får inte ändra branch, review- eller merge-state.
