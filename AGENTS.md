@@ -13,7 +13,7 @@ Leverera fungerande, verifierade och avgränsade ändringar. Läs relevant imple
 - `dev` är inte en permanent arbetsbranch och ska inte användas som standard för nytt arbete.
 - Squash är enda tillåtna merge-metod.
 - Använd inte direkt merge om det inte uttryckligen begärts.
-- Repositoryts workflows får inte uppdatera PR-brancher, armera auto-merge eller utföra annan PR-maintenance. Sådan automation är ett separat ansvar utanför Regelverkets verifieringsworkflows. Metadata-only assignee/label-hantering enligt undantaget nedan är den enda tillåtna avvikelsen och får inte ändra branch, review- eller merge-state.
+- Repositoryts workflows får inte utföra generell PR-maintenance. De enda tillåtna undantagen är metadata-only automation enligt undantaget nedan och `.github/workflows/dependabot-automerge.yml`, som enbart får underhålla PR:er skapade av `dependabot[bot]` enligt det uttryckliga Dependabot-undantaget nedan.
 
 ## Live merge-policy för `main`
 
@@ -44,6 +44,7 @@ Varje workflow har ett enda ansvar. Den godkända workflow-inventeringen är:
 - `.github/workflows/osv-scanner.yml` — OSV dependency scanning. Den får endast skanna och rapportera dependency/security-resultat.
 - `.github/workflows/metadata-routing.yml` — tunn caller till Avkrokens centrala deterministiska metadata-routing. Den får endast hantera assignee och labels på issues/PR:er.
 - `.github/workflows/issue-classification.yml` — tunn caller till Avkrokens centrala metadata-only Agentic Workflow för issueklassificering.
+- `.github/workflows/dependabot-automerge.yml` — avgränsad Dependabot-PR-maintenance som armerar GitHubs native squash auto-merge och uppdaterar `BEHIND`-brancher utan att kringgå mergegates.
 
 Ett workflow får inte få ett andra operativt ansvar för att det råkar vara praktiskt att lägga koden där. PR-maintenance, auto-merge, branchmutation, remediation och deployment ska inte gömmas i CI- eller security-workflows.
 
@@ -61,7 +62,17 @@ Repositoryägaren har uttryckligen godkänt den centrala metadataautomationen oc
 - AI-triagen får inte kommentera, assigna användare eller coding agents, skapa/ändra branches eller PR:er, redigera/stänga issues, reviewa, mergea, deploya eller utföra/föreslå remediation.
 - Copilot-auth får komma från organization billing eller GitHub Actions-secreten `COPILOT_GITHUB_TOKEN`. Credentialvärden får aldrig committas eller skrivas i logs/dokumentation.
 
-Undantaget ändrar inte övriga förbud mot AI-remediation, reviewautomation, branch-/PR-mutation, auto-merge eller deployment.
+Metadataundantaget ändrar inte övriga förbud mot AI-remediation, reviewautomation, branch-/PR-mutation, auto-merge eller deployment.
+
+## Dependabot maintenance exception
+
+Repositoryägaren har uttryckligen godkänt `.github/workflows/dependabot-automerge.yml` för ett enda avgränsat ansvar: självläkande PR-maintenance för öppna, icke-draft PR:er skapade av `dependabot[bot]`.
+
+- Workflowen får armera GitHubs native auto-merge med squash; den får aldrig direktmerga eller kringgå rulesets, required checks, Code Scanning eller reviewkrav.
+- När GitHub rapporterar en Dependabot-PR som `BEHIND` får workflowen använda GitHubs native Update branch-funktion så att PR:n testas om mot aktuell `main`.
+- Workflowen får inte checka ut eller exekvera PR-kod.
+- Push- och PR-events ger snabb reconciliation. En schemalagd reconciliation var 15:e minut är den fail-safe som gör att missade eller rekursionsundertryckta events inte kan lämna kön permanent avstannad.
+- Varje reconciliation ska läsa aktuell GitHub-state från början; fel på en enskild PR får inte hindra att övriga öppna Dependabot-PR:er behandlas vid samma eller nästa körning.
 
 ## Required CI
 
