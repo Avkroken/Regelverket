@@ -211,10 +211,6 @@ workflows:
     path: .github/workflows/auto-fix-review.yml
     blob_sha: bcb0e763628ccb74d139bf47accf5dd459fb0fb5
     semantic_family: policy.auto-fix-review
-  - id: workflow.security_alert_snapshot
-    path: .github/workflows/security-alert-snapshot.yml
-    blob_sha: b754d12163f648e1af99bb05fdee13e70f756578
-    semantic_family: security.alert-snapshot
 
   - id: workflow.android_build
     path: .github/workflows/android-build.yml
