@@ -4,8 +4,7 @@ updates:
     assignees: ["blixten85"]
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "thursday"
+      interval: "daily"
       time: "01:00"
       timezone: "Europe/Stockholm"
     groups:
@@ -16,8 +15,7 @@ updates:
     assignees: ["blixten85"]
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "thursday"
+      interval: "daily"
       time: "01:10"
       timezone: "Europe/Stockholm"
     groups:
@@ -31,8 +29,7 @@ updates:
       - "/spikes/github-adapter/go"
       - "/spikes/yaml-fidelity/go"
     schedule:
-      interval: "weekly"
-      day: "thursday"
+      interval: "daily"
       time: "01:20"
       timezone: "Europe/Stockholm"
     groups:
