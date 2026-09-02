@@ -32,16 +32,6 @@ This SHA is shared across docker-idempotent-update, produkter, pastebinit, routi
 
 Implication: this is a true shared implementation artifact, not per-repository source.
 
-### security-alert-snapshot.yml
-
-Observed SHA:
-
-`b754d12163f648e1af99bb05fdee13e70f756578`
-
-Observed unchanged across all eight.
-
-Implication: same as above.
-
 ### scope-policy.yml
 
 Seven standard repositories use:
@@ -130,7 +120,6 @@ The v24.2 workflow population can be reduced conceptually to:
 Shared policy capabilities
   auto-fix-review
   scope-policy
-  security-alert snapshot/reporting family
   slot synchronization
   OSV gate/scanner family
 

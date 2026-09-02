@@ -45,7 +45,7 @@ Varje workflow har ett enda ansvar. Den godkända workflow-inventeringen är:
 
 Ett workflow får inte få ett andra operativt ansvar för att det råkar vara praktiskt att lägga koden där. PR-maintenance, auto-merge, branchmutation, remediation och deployment ska inte gömmas i CI- eller security-workflows.
 
-De pensionerade workflowsen `compiler-core.yml`, `github-adapter-spike.yml`, `packaging-spike.yml`, `technology-spikes.yml`, `sync-pool.yml`, `pr-watchdog.yml`, `auto-fix-review.yml`, `codex-issue-remediation.yml`, `startup-smoke.yml` och `security-alert-snapshot.yml` ska inte återinföras som parallella vägar.
+De pensionerade workflowsen `compiler-core.yml`, `github-adapter-spike.yml`, `packaging-spike.yml`, `technology-spikes.yml`, `sync-pool.yml`, `pr-watchdog.yml`, `auto-fix-review.yml` och `startup-smoke.yml` ska inte återinföras som parallella vägar. Pensionerade remediation- och security-reporting-flöden ska inte heller återinföras.
 
 GitHub Actions ska använda minsta nödvändiga behörighet och actions ska pinnas till full commit-SHA när praktiskt möjligt.
 

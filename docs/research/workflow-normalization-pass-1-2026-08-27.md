@@ -15,7 +15,6 @@ Across the inspected repositories, the recurring governance workflows are:
 auto-fix-review.yml
 osv-scanner.yml
 scope-policy.yml
-security-alert-snapshot.yml
 sync-pool.yml
 ```
 
@@ -29,7 +28,6 @@ In the directly compared standard repositories `docker-idempotent-update` and `p
 
 - `auto-fix-review.yml` has the same Git blob SHA: `bcb0e763628ccb74d139bf47accf5dd459fb0fb5`
 - `scope-policy.yml` has the same Git blob SHA: `154a00f9f68e84ab4e3b065091a075d1d67c95a1`
-- `security-alert-snapshot.yml` has the same Git blob SHA: `b754d12163f648e1af99bb05fdee13e70f756578`
 - `sync-pool.yml` has the same Git blob SHA: `24c322fa5dd160f4096849e84328bdcfb67634bd`
 
 Therefore these are not merely similar workflows; for this observed pair they are literally identical content reused across repositories.
