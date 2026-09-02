@@ -132,10 +132,6 @@ workflows:
     path: .github/workflows/scope-policy.yml
     blob_sha: 154a00f9f68e84ab4e3b065091a075d1d67c95a1
     semantic_family: policy.scope
-  - id: workflow.security_alert_snapshot
-    path: .github/workflows/security-alert-snapshot.yml
-    blob_sha: b754d12163f648e1af99bb05fdee13e70f756578
-    semantic_family: security.alert-snapshot
   - id: workflow.slot_sync
     path: .github/workflows/sync-pool.yml
     blob_sha: b64f095da4cab1729e71e915fb1ee5ec1c889a11
