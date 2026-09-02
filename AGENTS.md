@@ -9,11 +9,11 @@ Leverera fungerande, verifierade och avgränsade ändringar. Läs relevant imple
 ## Brancher och pull requests
 
 - Pusha aldrig direkt till `main`.
-- Använd `dev` som arbetsbranch och öppna PR från `dev` till `main`.
-- Skapa inte ytterligare arbetsbrancher för normalt agentarbete.
+- Skapa en kortlivad arbetsbranch från aktuell `main` för varje logisk ändring och öppna en ready PR till `main`.
+- `dev` är inte en permanent arbetsbranch och ska inte användas som standard för nytt arbete.
 - Squash är enda tillåtna merge-metod.
 - Använd inte direkt merge om det inte uttryckligen begärts.
-- Repositoryts workflows får inte uppdatera PR-brancher, armera auto-merge eller utföra annan PR-maintenance. Sådan automation är ett separat ansvar utanför Regelverkets verifieringsworkflows.
+- Repositoryts workflows får inte uppdatera PR-brancher, armera auto-merge eller utföra annan PR-maintenance. Sådan automation är ett separat ansvar utanför Regelverkets verifieringsworkflows. Metadata-only assignee/label-hantering enligt undantaget nedan är den enda tillåtna avvikelsen och får inte ändra branch, review- eller merge-state.
 
 ## Live merge-policy för `main`
 
@@ -42,12 +42,26 @@ Varje workflow har ett enda ansvar. Den godkända workflow-inventeringen är:
 - `.github/workflows/required-ci.yml` — build-, test- och verifierings-CI för repositoryts implementation och spikes. Den får endast läsa källkod och producera verifieringsresultat.
 - `.github/workflows/scope-policy.yml` — regression-gate för den godkända workflow-inventeringen. Den får endast verifiera policy.
 - `.github/workflows/osv-scanner.yml` — OSV dependency scanning. Den får endast skanna och rapportera dependency/security-resultat.
+- `.github/workflows/metadata-routing.yml` — tunn caller till Avkrokens centrala deterministiska metadata-routing. Den får endast hantera assignee och labels på issues/PR:er.
+- `.github/workflows/issue-classification.yml` — tunn caller till Avkrokens centrala metadata-only Agentic Workflow för issueklassificering.
 
 Ett workflow får inte få ett andra operativt ansvar för att det råkar vara praktiskt att lägga koden där. PR-maintenance, auto-merge, branchmutation, remediation och deployment ska inte gömmas i CI- eller security-workflows.
 
 De pensionerade workflowsen `compiler-core.yml`, `github-adapter-spike.yml`, `packaging-spike.yml`, `technology-spikes.yml`, `sync-pool.yml`, `pr-watchdog.yml`, `auto-fix-review.yml` och `startup-smoke.yml` ska inte återinföras som parallella vägar. Pensionerade remediation- och security-reporting-flöden ska inte heller återinföras.
 
 GitHub Actions ska använda minsta nödvändiga behörighet och actions ska pinnas till full commit-SHA när praktiskt möjligt.
+
+## Metadata-only automation exception
+
+Repositoryägaren har uttryckligen godkänt den centrala metadataautomationen och metadata-only AI-triage som ett avgränsat arkitekturbeslut.
+
+- `.github/workflows/metadata-routing.yml` får lägga till `blixten85` som assignee samt validera/härleda `agent:*`, `priority:*` och `triage:*` labels. Den får inte checka ut eller exekvera PR-kod och får inte ändra branch, review eller merge-state.
+- `.github/workflows/issue-classification.yml` får endast trigga på öppnade/återöppnade issues och anropa den SHA-pinnade centrala `issue-classification.lock.yml`.
+- AI-delen får endast läsa issue- och read-only repositorykontext och får via `gh-aw` safe outputs lägga till exakt en `difficulty:*` och en `security:*` label från den centrala allowlisten.
+- AI-triagen får inte kommentera, assigna användare eller coding agents, skapa/ändra branches eller PR:er, redigera/stänga issues, reviewa, mergea, deploya eller utföra/föreslå remediation.
+- Copilot-auth får komma från organization billing eller GitHub Actions-secreten `COPILOT_GITHUB_TOKEN`. Credentialvärden får aldrig committas eller skrivas i logs/dokumentation.
+
+Undantaget ändrar inte övriga förbud mot AI-remediation, reviewautomation, branch-/PR-mutation, auto-merge eller deployment.
 
 ## Required CI
 
