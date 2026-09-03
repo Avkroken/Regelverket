@@ -4,14 +4,15 @@ Regelverket är pensionerat som applikationsprojekt och repositoryt är avsiktli
 
 Den tidigare compiler/planner-idén, Rust-kärnan, spikes, fixtures och arkitekturdokumentationen är borttagna. Gemensam GitHub-automation för Avkroken hör hemma i `Avkroken/.github`.
 
-## Tillfälligt kvarvarande ansvar
+## Kvarvarande ansvar
 
-Repositoryt finns kvar tills organisationens GitHub-ruleset har flyttats bort från denna referens:
+Repositoryt innehåller endast sina egna övergångskontroller:
 
-- `.github/workflows/osv-scanner.yml` — används fortfarande som central required workflow av Avkroken.
+- `.github/workflows/required-ci.yml` — verifierar att pensionerat produktinnehåll inte återinförs.
+- `.github/workflows/scope-policy.yml` — verifierar repositoryts tillåtna workflow-inventarium och scope.
 
-`CI / required` och `scope-policy` finns endast för att nuvarande merge-policy för detta repository ska fortsätta fungera medan övergången slutförs.
+Organisationens required OSV-workflow ägs nu av `Avkroken/.github`; Regelverket är inte längre central OSV-källa.
 
 ## Slutläge
 
-När organization-rulesetet i GitHub UI inte längre refererar Regelverkets OSV-workflow kan repositoryt arkiveras. Ingen ny produktfunktionalitet ska byggas här.
+Repositoryt kan arkiveras när dess kvarvarande övergångsberoenden inte längre behövs av organisationens GitHub-konfiguration. Ingen ny produktfunktionalitet eller gemensam automation ska byggas här.
