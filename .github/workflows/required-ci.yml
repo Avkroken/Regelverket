@@ -44,4 +44,5 @@ jobs:
 
           test -f README.md
           test -f AGENTS.md
-          test -f .github/workflows/osv-scanner.yml
+          test -f .github/workflows/required-ci.yml
+          test -f .github/workflows/scope-policy.yml
